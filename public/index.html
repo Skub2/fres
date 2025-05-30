@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz Express Moderne</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --main-color: #4F46E5;
+      --bg-color: #F9FAFB;
+      --text-color: #111827;
+      --accent-color: #E0E7FF;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 700px;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      text-align: center;
+      color: var(--main-color);
+    }
+    #progress {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    #progressBar {
+      height: 100%;
+      width: 0;
+      background-color: var(--main-color);
+      transition: width 0.3s ease;
+    }
+    label {
+      font-weight: 600;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .question {
+      margin-bottom: 25px;
+    }
+    .question p {
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .choices label {
+      display: block;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .choices label:hover {
+      background-color: var(--accent-color);
+    }
+    input[type="radio"] {
+      margin-right: 10px;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      background-color: var(--main-color);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      flex: 1;
+    }
+    button:hover {
+      background-color: #4338ca;
+    }
+    #result {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    #submitBtn,
+    #restartBtn {
+      display: none;
+      margin-top: 20px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Quiz Express</h1>
+    <form id="quizForm">
+      <div>
+        <label for="username">Votre nom :</label>
+        <input type="text" id="username" required />
+      </div>
+      <div id="progress"><div id="progressBar"></div></div>
+      <div id="questionContainer" class="question"></div>
+      <div class="buttons">
+        <button type="button" id="prevBtn">Précédent</button>
+        <button type="button" id="nextBtn">Suivant</button>
+      </div>
+      <button type="submit" id="submitBtn">Envoyer</button>
+    </form>
+    <button id="restartBtn">Recommencer le quiz</button>
+    <div id="result"></div>
+  </div>
+  <script>
+    const questionContainer = document.getElementById('questionContainer');
+    const quizForm = document.getElementById('quizForm');
+    const resultDiv = document.getElementById('result');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const progressBar = document.getElementById('progressBar');
+
+    let questions = [];
+    let currentQuestion = 0;
+    let userAnswers = [];
+
+    fetch('/quiz/questions')
+      .then(res => res.json())
+      .then(data => {
+        questions = data;
+        userAnswers = new Array(questions.length).fill(null);
+        renderQuestion();
+      });
+
+    function renderQuestion() {
+      const q = questions[currentQuestion];
+      const percent = ((currentQuestion) / questions.length) * 100;
+      progressBar.style.width = percent + '%';
+
+      questionContainer.innerHTML = `
+        <p>${q.question}</p>
+        ${q.choices.map(choice => `
+          <div class="choices">
+            <label>
+              <input type="radio" name="q" value="${choice}" ${userAnswers[currentQuestion] === choice ? "checked" : ""} />
+              ${choice}
+            </label>
+          </div>
+        `).join('')}
+        <div id="feedback" style="margin-top:10px; font-weight:600;"></div>
+        <div id="explanation" style="margin-top:5px; font-style:italic;"></div>
+      `;
+
+      prevBtn.style.display = currentQuestion === 0 ? 'none' : 'inline-block';
+      nextBtn.style.display = 'none';
+      submitBtn.style.display = 'none';
+
+      document.querySelectorAll('input[name="q"]').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const selected = e.target.value;
+          userAnswers[currentQuestion] = selected;
+          const feedback = document.getElementById('feedback');
+          const explanation = document.getElementById('explanation');
+
+          if (selected === questions[currentQuestion].answer) {
+            feedback.textContent = '✅ Bonne réponse !';
+            feedback.style.color = 'green';
+          } else {
+            feedback.textContent = '❌ Mauvaise réponse.';
+            feedback.style.color = 'red';
+          }
+
+          explanation.textContent = "💡 " + questions[currentQuestion].explanation;
+
+          document.querySelectorAll('input[name="q"]').forEach(i => i.disabled = true);
+          if (currentQuestion === questions.length - 1) {
+            submitBtn.style.display = 'inline-block';
+          } else {
+            nextBtn.style.display = 'inline-block';
+          }
+        });
+      });
+    }
+
+    nextBtn.addEventListener('click', () => {
+      if (userAnswers[currentQuestion]) {
+        currentQuestion++;
+        renderQuestion();
+      }
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        renderQuestion();
+      }
+    });
+
+    quizForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+
+      fetch('/quiz/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, answers: userAnswers })
+      })
+        .then(res => res.json())
+        .then(data => {
+          resultDiv.textContent = `Merci ${username}, vous avez obtenu ${data.score} / ${questions.length}`;
+          questionContainer.innerHTML = '';
+          progressBar.style.width = '100%';
+          prevBtn.style.display = 'none';
+          nextBtn.style.display = 'none';
+          submitBtn.style.display = 'none';
+          restartBtn.style.display = 'inline-block';
+        });
+    });
+
+    restartBtn.addEventListener('click', () => {
+      location.reload();
+    });
+  </script>
+</body>
+</html>

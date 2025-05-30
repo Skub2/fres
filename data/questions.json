@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "question": "Quelle est la capitale de la France ?",
+    "choices": [
+      "Paris",
+      "Berlin",
+      "Madrid",
+      "Rome"
+    ],
+    "answer": "Paris",
+    "explanation": "Paris est la capitale de la France depuis plus de 1 000 ans."
+  },
+  {
+    "id": 2,
+    "question": "2 + 2 = ?",
+    "choices": [
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "answer": "4",
+    "explanation": "L'addition de 2 + 2 donne 4."
+  },{
+    "id": 3,
+    "question": "2 + 4 = ?",
+    "choices": [
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "answer": "6",
+    "explanation": "L'addition de 2 + 2 donne 4."
+  }
+]
